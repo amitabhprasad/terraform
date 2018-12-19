@@ -1,7 +1,9 @@
 resource "aws_instance" "webapp" {
   ami           = "${lookup(var.AMIS, var.AWS_REGION)}"
   instance_type = "t1.micro"
-
+  count = "${var.app_servers_count}"
+  # ensure servers are launched in seperate AZs
+  availability_zone = "${ element(split(",", module.aws_az.list_all), count.index) }" 
   tags {
        Name = "WebApp"
     }
@@ -27,6 +29,9 @@ resource "aws_instance" "database" {
   ami           = "${lookup(var.AMIS, var.AWS_REGION)}"
   instance_type = "t1.micro"
   associate_public_ip_address = "false"
+  count = "${var.db_servers_count}"
+  # ensure servers are launched in seperate AZs
+  availability_zone = "${ element(split(",", module.aws_az.list_all), count.index) }" 
   vpc_security_group_ids = ["${aws_security_group.MySQLDB.id}"]
   # the VPC subnet
   subnet_id = "${aws_subnet.main-private-1.id}"
